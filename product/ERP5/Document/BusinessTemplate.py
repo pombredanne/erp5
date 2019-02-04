@@ -135,7 +135,9 @@ SEPARATELY_EXPORTED_PROPERTY_DICT = {
   "Extension Component": ("py",   0, "text_content"),
   "File":                (None,   0, "data"),
   "Image":               (None,   0, "data"),
+  "Interface Component": ("py",   0, "text_content"),
   "OOoTemplate":         ("oot",  1, "_text"),
+  "Mixin Component":     ("py",   0, "text_content"),
   "PDF":                 ("pdf",  0, "data"),
   "PDFForm":             ("pdf",  0, "data"),
   "PyData Script":       ("py",   0, "_body"),
@@ -4211,6 +4213,9 @@ class _ZodbComponentTemplateItem(ObjectTemplateItem):
   @staticmethod
   def _getZodbObjectId(id):
     raise NotImplementedError
+
+  def __init__(self, id_list, tool_id='portal_components', **kw):
+    ObjectTemplateItem.__init__(self, id_list, tool_id=tool_id, **kw)
 
   def isKeepWorkflowObjectLastHistoryOnly(self, path):
     """
