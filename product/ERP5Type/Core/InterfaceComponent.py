@@ -28,6 +28,7 @@
 ##############################################################################
 
 from Products.ERP5Type.Core.DocumentComponent import DocumentComponent
+from Products.ERP5Type.ConsistencyMessage import ConsistencyMessage
 
 class InterfaceComponent(DocumentComponent):
   """
@@ -43,3 +44,20 @@ class InterfaceComponent(DocumentComponent):
   @staticmethod
   def getIdPrefix():
     return 'interface'
+
+  _message_reference_wrong_naming = "Interface Reference must start with 'I'"
+  def checkConsistency(self, *args, **kw):
+    """
+    Per convention, an Interface class must start with 'I'
+    """
+    error_list = super(InterfaceComponent, self).checkConsistency(*args, **kw)
+    reference = self.getReference()
+    if (reference and # Already checked in the parent class
+        not reference.startswith('I')):
+      error_list.append(ConsistencyMessage(
+        self,
+        self.getRelativeUrl(),
+        message=self._message_reference_wrong_naming,
+        mapping={}))
+
+    return error_list

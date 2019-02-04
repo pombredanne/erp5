@@ -43,3 +43,20 @@ class MixinComponent(DocumentComponent):
   @staticmethod
   def getIdPrefix():
     return 'mixin'
+
+  _message_reference_wrong_naming = "Mixin Reference must end with 'Mixin'"
+  def checkConsistency(self, *args, **kw):
+    """
+    Per convention, a Mixin class must end with 'Mixin'
+    """
+    error_list = super(MixinComponent, self).checkConsistency(*args, **kw)
+    reference = self.getReference()
+    if (reference and # Already checked in the parent class
+        not reference.endswith('Mixin')):
+      error_list.append(ConsistencyMessage(
+        self,
+        self.getRelativeUrl(),
+        message=self._message_reference_wrong_naming,
+        mapping={}))
+
+    return error_list
