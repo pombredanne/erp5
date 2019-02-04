@@ -2417,7 +2417,6 @@ class Test(ERP5TypeTestCase):
       self.commit()
 
 from Products.ERP5Type.Core.InterfaceComponent import InterfaceComponent
-
 class TestZodbInterfaceComponent(TestZodbDocumentComponent):
   """
   Tests specific to ZODB Interface Component.
@@ -2439,7 +2438,7 @@ class %s(Interface):
 ''' % class_name
 
   def testNamingConsistency(self):
-    valid_reference = 'ITestNaming'
+    valid_reference = self._generateReference('TestNaming')
     component = self._newComponent(valid_reference)
     component.validate()
     self.tic()
@@ -2468,7 +2467,7 @@ class %s(Interface):
     self.assertEqual(component.getValidationState(), 'modified')
     self.assertEqual([m.getMessage().translate()
                       for m in component.checkConsistency()],
-                     ["Interface Reference must start with 'I'"])
+                     [self._document_class._message_reference_wrong_naming])
     self.assertEqual(component.getTextContentErrorMessageList(), [])
     self.assertEqual(component.getTextContentWarningMessageList(), [])
     self.assertEqual(component.getReference(), invalid_reference)
@@ -2515,6 +2514,67 @@ class %s(Interface):
       person_type.setTypeInterfaceList(person_original_interface_type_list)
       self.commit()
 
+from Products.ERP5Type.Core.MixinComponent import MixinComponent
+class TestZodbMixinComponent(TestZodbInterfaceComponent):
+  """
+  Tests specific to ZODB Mixin Component.
+  """
+  _portal_type = 'Mixin Component'
+  _document_class = MixinComponent
+
+  def _generateReference(self, base_name):
+    return base_name + 'Mixin'
+
+  def _getValidSourceCode(self, class_name):
+    return '''class %s:
+  def test42(self):
+    """
+    Return 42
+    """
+''' % class_name
+
+  def testAssignToPortalTypeClass(self):
+    """
+    Create a new Document Component inheriting from Person Document and try to
+    assign it to Person Portal Type, then create a new Person and check
+    whether it has been successfully added to its Portal Type class bases and
+    that the newly-defined function on ZODB Component can be called as well as
+    methods from Person Document
+    """
+    import erp5.portal_type
+    person_type = self.portal.portal_types.Person
+    person_type_class = erp5.portal_type.Person
+
+    component = self._newComponent('TestPortalTypeMixin')
+    self.tic()
+    self.failIfModuleImportable('TestPortalTypeMixin')
+    self.assertFalse('TestPortalTypeMixin' in person_type.getMixinTypeList())
+
+    component.validate()
+    self.assertModuleImportable('TestPortalTypeMixin')
+    self.assertTrue('TestPortalTypeMixin' in person_type.getMixinTypeList())
+
+    from erp5.component.mixin.TestPortalTypeMixin import TestPortalTypeMixin
+
+    person_type_class.loadClass()
+    person_type_class_mro_list = person_type_class.__mro__
+    self.assertFalse(TestPortalTypeMixin in person_type_class_mro_list)
+    person_original_mixin_type_list = list(person_type.getTypeMixinList())
+    try:
+      person_type.setTypeMixinList(person_original_mixin_type_list +
+                                   ['TestPortalTypeMixin'])
+      self.commit()
+      self.assertEqual(person_type_class.__isghost__, True)
+
+      person_type_class.loadClass()
+      person_type_class_mro_list = person_type_class.__mro__
+      from erp5.component.mixin.TestPortalTypeMixin import TestPortalTypeMixin
+      self.assertTrue(TestPortalTypeMixin in person_type_class_mro_list)
+
+    finally:
+      person_type.setTypeMixinList(person_original_mixin_type_list)
+      self.commit()
+
 def test_suite():
   suite = unittest.TestSuite()
   suite.addTest(unittest.makeSuite(TestPortalTypeClass))
@@ -2522,4 +2582,6 @@ def test_suite():
   suite.addTest(unittest.makeSuite(TestZodbExtensionComponent))
   suite.addTest(unittest.makeSuite(TestZodbDocumentComponent))
   suite.addTest(unittest.makeSuite(TestZodbTestComponent))
+  suite.addTest(unittest.makeSuite(TestZodbInterfaceComponent))
+  suite.addTest(unittest.makeSuite(TestZodbMixinComponent))
   return suite

@@ -28,6 +28,7 @@
 ##############################################################################
 
 from Products.ERP5Type.Core.DocumentComponent import DocumentComponent
+from Products.ERP5Type.ConsistencyMessage import ConsistencyMessage
 
 class MixinComponent(DocumentComponent):
   """

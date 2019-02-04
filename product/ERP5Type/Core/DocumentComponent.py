@@ -75,8 +75,19 @@ class DocumentComponent(ComponentMixin, TextContentHistoryMixin):
     error_list = super(DocumentComponent, self).checkConsistency(*args ,**kw)
     reference = self.getReference()
     text_content = self.getTextContent()
-    if (reference and text_content and # Already checked in the parent class
-        'class %s(' % reference not in text_content):
+    # Already checked in the parent class
+    if reference and text_content:
+      class_definition_str = 'class %s' % reference
+      try:
+        sep = text_content[text_content.index(class_definition_str) +
+                           len(class_definition_str)]
+      except (ValueError, IndexError):
+        pass
+      else:
+        if (sep == ':' or # old-style class
+            sep == '('):  # new-style class
+          return error_list
+
       error_list.append(ConsistencyMessage(
         self,
         self.getRelativeUrl(),
