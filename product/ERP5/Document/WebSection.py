@@ -249,6 +249,7 @@ class WebSection(Domain, DocumentExtensibleTraversableMixin):
                 id=document.getReference(),
                 original_container=document.getParentValue(),
                 original_id=document.getId(),
+                absolute_url=lambda *args, **kw: self.absolute_url(*args, **kw),
                 editable_absolute_url=document.absolute_url())).__of__(self)
         else:
           isAuthorizationForced = getattr(self, 'isAuthorizationForced', None)
